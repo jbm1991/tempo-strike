@@ -1,15 +1,13 @@
 import { create } from "zustand";
 import { v4 as uuidv4 } from "uuid";
-import type { Move, Combo, Sequence, ComboNode, SequenceNode } from "../types";
+import type { Move, Combo, ComboNode } from "../types";
 
 interface BuilderState {
-  // --- State ---
-  moveLibrary: Move[]; // The master list of available strikes/blocks
-  currentSequence: Sequence; // The sequence currently being built
+  moveLibrary: Move[];
+  currentCombo: Combo;
 
-  // --- Actions ---
-  addMoveToCombo: (comboId: string, move: Move) => void;
-  removeMoveFromCombo: (comboId: string, nodeInstanceId: string) => void;
+  addMoveToCombo: (move: Move) => void;
+  removeMoveFromCombo: (nodeInstanceId: string) => void;
 }
 
 // Dummy data
@@ -34,29 +32,36 @@ const INITIAL_MOVES: Move[] = [
 
 export const useBuilderStore = create<BuilderState>((set) => ({
   moveLibrary: INITIAL_MOVES,
-  currentSequence: {
-    id: "seq_initial",
-    name: "My First Sequence",
+  currentCombo: {
+    id: "combo_builder_1",
+    name: "New Combo",
     nodes: [],
   },
 
-  addMoveToCombo: (comboId, move) =>
+  addMoveToCombo: (move) =>
     set((state) => {
       const newNode: ComboNode = {
         ...move,
         instanceId: uuidv4(),
       };
 
-      console.log(
-        `Added ${move.name} to combo ${comboId}. Instance ID: ${newNode.instanceId}`,
-      );
-
-      return state;
+      return {
+        ...state,
+        currentCombo: {
+          ...state.currentCombo,
+          nodes: [...state.currentCombo.nodes, newNode],
+        },
+      };
     }),
 
-  removeMoveFromCombo: (comboId, nodeInstanceId) =>
-    set((state) => {
-      console.log(`Removing node ${nodeInstanceId} from ${comboId}`);
-      return state;
-    }),
+  removeMoveFromCombo: (nodeInstanceId) =>
+    set((state) => ({
+      ...state,
+      currentCombo: {
+        ...state.currentCombo,
+        nodes: state.currentCombo.nodes.filter(
+          (n) => n.instanceId !== nodeInstanceId,
+        ),
+      },
+    })),
 }));
